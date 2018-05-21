@@ -4,11 +4,12 @@ const startButton = document.getElementById("start-button");
 let gameWidth = document.getElementById("board-width");
 let gameHeight = document.getElementById("board-height");
 let boardDimension = document.getElementById("board-dimension");
-let boardSize = [10, 10];
+let boardSize = [40, 40];
 let keydown = "";
 let interval;
-let running = false;
-let speed = 1000;
+let isRunning = false;
+let speed = 300;
+let tempBoard = [];
 
 //starts everything
 document.addEventListener("DOMContentLoaded", () => {
@@ -46,13 +47,13 @@ const documentEventListeners = () => {
 
 //toggles start button text and event listener to start/stop the game
 const addInterval = () => {
-  running = true;
+  isRunning = true;
   startButton.innerText = "Stop";
   interval = setInterval(loop, speed);
   startButton.removeEventListener("click", addInterval);
   let resetInterval = startButton.addEventListener("click", () => {
     clearInterval(interval);
-    running = false;
+    isRunning = false;
     startButton.innerText = "Start!";
     startButton.removeEventListener("click", resetInterval);
     startButton.addEventListener("click", addInterval);
@@ -77,6 +78,7 @@ const createBoard = (width, height) => {
   gameBoard.style.width = width * 10 + "px";
   gameBoard.style.height = height * 10 + "px";
   for (let i = 0; i < height * 10; i += 10) {
+    tempBoard.push([]);
     for (let j = 0; j < width * 10; j += 10) {
       let cell = document.createElement("div");
       addStyle(cell, i, j);
@@ -104,10 +106,10 @@ const addStyle = (cell, i, j) => {
 
 //event listener function for changing a cell with a single click
 const clickBit = cell => {
-  if (cell.alive === false && !running) {
+  if (cell.alive === false && !isRunning) {
     cell.alive = true;
     cell.style.backgroundColor = "yellow";
-  } else if (cell.alive === true && !running) {
+  } else if (cell.alive === true && !isRunning) {
     cell.alive = false;
     cell.style.backgroundColor = "green";
   }
@@ -115,33 +117,71 @@ const clickBit = cell => {
 
 //event listener function for changing multiple cells on dragover
 const mouseOver = cell => {
-  if (keydown === 67 && !cell.alive && !running) {
+  if (keydown === 67 && !cell.alive && !isRunning) {
     cell.alive = true;
     cell.style.backgroundColor = "yellow";
-  } else if (keydown === 88 && cell.alive && !running) {
+  } else if (keydown === 88 && cell.alive && !isRunning) {
     cell.alive = false;
     cell.style.backgroundColor = "green";
   }
 };
 
 //main game logic
+//I don't like running the same loop twice, especially because its O(n^2) complexity, but modifying the cells as it runs messed up the logic
+//(cells were changed and then tallied up in later iterations). I could rewrite the DOM every time, wiping the board and repopulating with new elements, but that seemed cumbersome.
 const loop = () => {
-  let neighbors;
   for (let i = 0; i < boardSize[1]; i++) {
     for (let j = 0; j < boardSize[0]; j++) {
-      neighbors = checkNeighbors(i, j);
+      tempBoard[i][j] = checkNeighbors(i, j);
+    }
+  }
+  //rules
+  //Any live cell with fewer than two live neighbors dies, as if by under population.
+  //Any live cell with two or three live neighbors lives on to the next generation.
+  //Any live cell with more than three live neighbors dies, as if by overpopulation.
+  //Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
+  for (let i = 0; i < boardSize[1]; i++) {
+    for (var j = 0; j < boardSize[0]; j++) {
       let cell = document.getElementById(`${i}a${j}`);
-      if (cell.style.backgroundColor === "yellow") {
-        cell.style.backgroundColor = "green";
-      } else if (cell.style.backgroundColor === "green") {
-        cell.style.backgroundColor = "yellow";
+      if (cell.alive) {
+        if (tempBoard[i][j] - 1 < 2) {
+          cell.alive = false;
+          cell.style.backgroundColor = "green";
+        } else if (tempBoard[i][j] - 1 > 3) {
+          cell.alive = false;
+          cell.style.backgroundColor = "green";
+        } else if (tempBoard[i][j] === 2 || tempBoard[i][j] === 3) {
+          cell.alive = true;
+          cell.style.backgroundColor = "yellow";
+        }
+      } else {
+        if (tempBoard[i][j] === 3) {
+          cell.alive = true;
+          cell.style.backgroundColor = "yellow";
+        }
       }
     }
   }
 };
 
-const checkNeighbors = () => {
-  let result;
+//checks and tallies all alive neighbors, including itself
+//If there's a way to exclude specific values from the conditional, like '... !== null && (dx !== 0 && dy !== 0)', let me know.
+//That looks like it should work, but didn't.
+const checkNeighbors = (i, j) => {
+  let result = 0;
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      if (
+        document.getElementById(`${i + dx}a${j + dy}`) !== null
+        // && (dx !== 0 && dy !== 0)
+      ) {
+        if (document.getElementById(`${i + dx}a${j + dy}`).alive) {
+          result += 1;
+        }
+      }
+    }
+  }
+  return result;
 };
 
-//settimeout, do the loop every '0.5' seconds or however long is right, each iteration swap adjacent cells if this cell is selected. modify button to change text and stop the loop.
+//give speed up option, and allow changes to live/dead cells
