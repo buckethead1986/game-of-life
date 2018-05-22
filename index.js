@@ -6,7 +6,6 @@ const optionsDiv = document.getElementById("options");
 let gameWidth = document.getElementById("board-width");
 let gameHeight = document.getElementById("board-height");
 let liveColorChange = document.getElementById("live-color");
-// let deadColorChange = document.getElementById("dead-color");
 let speedChange = document.getElementById("speed");
 let boardDimension = document.getElementById("board-dimension");
 let boardSize = [40, 40];
@@ -67,14 +66,10 @@ const boardOptions = e => {
   if (liveColorChange.value !== liveColor && liveColorChange.value !== "") {
     liveColor = liveColorChange.value;
   }
-  // if (deadColorChange.value !== deadColor && deadColorChange.value !== "") {
-  //   deadColor = deadColorChange.value;
-  // }
   if (speedChange.value !== speed && speedChange.value !== "") {
     speed = speedChange.value;
   }
   liveColorChange.value = "";
-  // deadColorChange.value = "";
   gameWidth.value = "";
   gameHeight.value = "";
   speedChange.value = "";

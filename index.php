@@ -28,10 +28,6 @@
           <label for="live-color">Enter live cell color (by name, hex code, rgb...)</label>
           <input type="text" class="form-control" id="live-color" placeholder="Live Cell Color">
         </div>
-        <!-- <div class="form-group">
-          <label for="dead-color">Enter dead cell color (by name, hex code, rgb...)</label>
-          <input type="text" class="form-control" id="dead-color" placeholder="Dead Cell Color">
-        </div> -->
         <div class="form-group">
           <label for="speed">Enter generation speed (in milliseconds)</label>
           <input type="text" class="form-control" id="speed" placeholder="Speed (in ms)">
